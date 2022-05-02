@@ -4,10 +4,10 @@ import (
 	"flag"
 	"os"
 
-	"github.com/go-kratos/kratos-layout/internal/conf"
+	"github.com/davidchen-cn/go-layout/internal/conf"
+	"github.com/go-kratos/kratos/contrib/config/apollo/v2"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"
-	"github.com/go-kratos/kratos/v2/config/file"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
@@ -20,15 +20,9 @@ var (
 	Name string
 	// Version is the version of the compiled software.
 	Version string
-	// flagconf is the config flag.
-	flagconf string
 
 	id, _ = os.Hostname()
 )
-
-func init() {
-	flag.StringVar(&flagconf, "conf", "../../configs", "config path, eg: -conf config.yaml")
-}
 
 func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server) *kratos.App {
 	return kratos.New(
@@ -44,6 +38,31 @@ func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server) *kratos.App {
 	)
 }
 
+type ApolloConf struct {
+	AppID     string
+	Cluster   string
+	Endpoint  string
+	Namespace string
+	Secret    string
+}
+
+func getApolloConfig() *ApolloConf {
+	conf := &ApolloConf{
+		AppID:     os.Getenv("APOLLO_APPID"),
+		Cluster:   "default",
+		Endpoint:  os.Getenv("APOLLO_ENDPOINT"),
+		Namespace: "application.yaml",
+		Secret:    os.Getenv("APOLLO_SECRET"),
+	}
+	if cluster := os.Getenv("APOLLO_CLUSTER"); cluster != "" {
+		conf.Cluster = cluster
+	}
+	if namespace := os.Getenv("APOLLO_NAMESPACE"); namespace != "" {
+		conf.Namespace = namespace
+	}
+	return conf
+}
+
 func main() {
 	flag.Parse()
 	logger := log.With(log.NewStdLogger(os.Stdout),
@@ -55,9 +74,17 @@ func main() {
 		"trace.id", tracing.TraceID(),
 		"span.id", tracing.SpanID(),
 	)
+	apolloConf := getApolloConfig()
 	c := config.New(
 		config.WithSource(
-			file.NewSource(flagconf),
+			apollo.NewSource(
+				apollo.WithAppID(apolloConf.AppID),
+				apollo.WithCluster(apolloConf.Cluster),
+				apollo.WithEndpoint(apolloConf.Endpoint),
+				apollo.WithNamespace(apolloConf.Namespace),
+				apollo.WithEnableBackup(),
+				apollo.WithSecret(apolloConf.Secret),
+			),
 		),
 	)
 	defer c.Close()
