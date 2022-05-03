@@ -9,9 +9,6 @@ import (
 var ProviderSet = wire.NewSet(NewHTTPServer, NewGRPCServer)
 
 var (
-	// Name is the name of the compiled software.
-	Name = "metrics"
-
 	_metricSeconds = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "server",
 		Subsystem: "requests",

@@ -16,3 +16,5 @@ application:
       write_timeout: 0.2s
   etcd:
     hosts: [127.0.0.1:2379]
+  trace:
+    endpoint: "http://localhost:14268/api/traces"

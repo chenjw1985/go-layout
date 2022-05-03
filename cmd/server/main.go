@@ -15,13 +15,20 @@ import (
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	clientV3 "go.etcd.io/etcd/client/v3"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/sdk/resource"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
 )
 
-// go build -ldflags "-X main.Version=x.y.z"
+// go build -ldflags "-X main.Version=x.y.z -X main.Environment=prod"
 var (
-	Name    = "change-to-your-app-name"
-	Version = "change-to-your-app-version"
-	id, _   = os.Hostname()
+	Name        = "go-layout"
+	Version     = "0.1.0"
+	Environment = "dev"
+	id, _       = os.Hostname()
 )
 
 func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server, etcdConf *conf.Etcd) *kratos.App {
@@ -78,17 +85,29 @@ func getApolloConfig() *ApolloConf {
 	return conf
 }
 
+func createTracerProvider(endpoint string) (*tracesdk.TracerProvider, error) {
+	// Create the Jaeger exporter
+	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(endpoint)))
+	if err != nil {
+		return nil, err
+	}
+	tp := tracesdk.NewTracerProvider(
+		// Always be sure to batch in production.
+		tracesdk.WithBatcher(exp),
+		// Record information about this application in a Resource.
+		tracesdk.WithResource(resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceNameKey.String(Name),
+			attribute.String("environment", Environment),
+			attribute.String("ID", id),
+		)),
+	)
+	return tp, nil
+}
+
 func main() {
 	flag.Parse()
-	logger := log.With(log.NewStdLogger(os.Stdout),
-		"ts", log.DefaultTimestamp,
-		"caller", log.DefaultCaller,
-		"service.id", id,
-		"service.name", Name,
-		"service.version", Version,
-		"trace.id", tracing.TraceID(),
-		"span.id", tracing.SpanID(),
-	)
+	// init config
 	apolloConf := getApolloConfig()
 	var c config.Config
 	if mode := os.Getenv("KratosRunMode"); mode == "dev" {
@@ -119,12 +138,33 @@ func main() {
 	if err := c.Load(); err != nil {
 		panic(err)
 	}
-
 	var bc conf.Bootstrap
 	if err := c.Scan(&bc); err != nil {
 		panic(err)
 	}
 
+	// init tracing
+	if bc.Application.Trace != nil && bc.Application.Trace.Endpoint != "" {
+		log.Debugf("Init tracing services on %s", bc.Application.Trace.Endpoint)
+		traceTp, err := createTracerProvider(bc.Application.Trace.Endpoint)
+		if err != nil {
+			panic(err)
+		}
+		otel.SetTracerProvider(traceTp)
+	}
+
+	// init logger
+	logger := log.With(log.NewStdLogger(os.Stdout),
+		"ts", log.DefaultTimestamp,
+		"caller", log.DefaultCaller,
+		"service.id", id,
+		"service.name", Name,
+		"service.version", Version,
+		"trace.id", tracing.TraceID(),
+		"span.id", tracing.SpanID(),
+	)
+
+	// Bootstrap
 	app, cleanup, err := wireApp(bc.Application.Server, bc.Application.Data, bc.Application.Etcd, logger)
 	if err != nil {
 		panic(err)
