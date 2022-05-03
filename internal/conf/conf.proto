@@ -12,6 +12,7 @@ message Bootstrap {
 message Application {
   Server server = 1;
   Data data = 2;
+  Etcd etcd = 3;
 }
 
 message Server {
@@ -42,4 +43,8 @@ message Data {
   }
   Database database = 1;
   Redis redis = 2;
+}
+
+message Etcd {
+  repeated string hosts = 1;
 }

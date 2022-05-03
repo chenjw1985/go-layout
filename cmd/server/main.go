@@ -6,6 +6,7 @@ import (
 
 	"github.com/davidchen-cn/go-layout/internal/conf"
 	"github.com/go-kratos/kratos/contrib/config/apollo/v2"
+	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/file"
@@ -13,20 +14,18 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/go-kratos/kratos/v2/transport/http"
+	clientV3 "go.etcd.io/etcd/client/v3"
 )
 
 // go build -ldflags "-X main.Version=x.y.z"
 var (
-	// Name is the name of the compiled software.
-	Name string
-	// Version is the version of the compiled software.
-	Version string
-
-	id, _ = os.Hostname()
+	Name    = "change-to-your-app-name"
+	Version = "change-to-your-app-version"
+	id, _   = os.Hostname()
 )
 
-func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server) *kratos.App {
-	return kratos.New(
+func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server, etcdConf *conf.Etcd) *kratos.App {
+	opts := []kratos.Option{
 		kratos.ID(id),
 		kratos.Name(Name),
 		kratos.Version(Version),
@@ -36,7 +35,22 @@ func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server) *kratos.App {
 			hs,
 			gs,
 		),
-	)
+	}
+	// enable etcd as services discoverer
+	if etcdConf != nil && etcdConf.Hosts != nil {
+		log.Debugf("Init etcd services discoverer on %v", etcdConf.Hosts)
+		client, err := clientV3.New(clientV3.Config{
+			Endpoints: etcdConf.Hosts,
+		})
+		if err != nil {
+			panic(err)
+		}
+		// new reg with etcd client
+		reg := etcd.New(client)
+		opts = append(opts, kratos.Registrar(reg))
+	}
+
+	return kratos.New(opts...)
 }
 
 type ApolloConf struct {
@@ -78,12 +92,15 @@ func main() {
 	apolloConf := getApolloConfig()
 	var c config.Config
 	if mode := os.Getenv("KratosRunMode"); mode == "dev" {
+		configPath := "../../configs/config.yaml"
+		log.Debugf("Init config from %s", configPath)
 		c = config.New(
 			config.WithSource(
-				file.NewSource("../../configs/config.yaml"),
+				file.NewSource(configPath),
 			),
 		)
 	} else {
+		log.Debugf("Init config from %s:%s(%s)", apolloConf.AppID, apolloConf.Endpoint, apolloConf.Namespace)
 		c = config.New(
 			config.WithSource(
 				apollo.NewSource(
@@ -108,7 +125,7 @@ func main() {
 		panic(err)
 	}
 
-	app, cleanup, err := wireApp(bc.Application.Server, bc.Application.Data, logger)
+	app, cleanup, err := wireApp(bc.Application.Server, bc.Application.Data, bc.Application.Etcd, logger)
 	if err != nil {
 		panic(err)
 	}
