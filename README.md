@@ -4,6 +4,14 @@
 ```
 go install github.com/go-kratos/kratos/cmd/kratos/v2@latest
 ```
+## Set Local Dev Env
+```bash
+vi ~/.bash_profile
+# add below content
+export KratosRunMode=dev
+# save change
+:wq!
+```
 ## Create a service
 ```
 # Create a template project
