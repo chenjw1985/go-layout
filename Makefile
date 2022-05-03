@@ -11,6 +11,7 @@ init:
 	go install github.com/go-kratos/kratos/cmd/kratos/v2@latest
 	go install github.com/go-kratos/kratos/cmd/protoc-gen-go-http/v2@latest
 	go install github.com/google/gnostic/cmd/protoc-gen-openapi@latest
+	go install github.com/envoyproxy/protoc-gen-validate@latest
 	brew install protobuf #recommend use brew manage the mac applications
 
 .PHONY: config
@@ -32,6 +33,15 @@ api:
  	       --openapi_out==paths=source_relative:. \
 	       $(API_PROTO_FILES)
 
+.PHONY: validate
+# generate validate proto
+validate:
+	protoc --proto_path=. \
+           --proto_path=./third_party \
+           --go_out=paths=source_relative:. \
+           --validate_out=paths=source_relative,lang=go:. \
+           $(API_PROTO_FILES)
+
 .PHONY: build
 # build
 build:
@@ -49,6 +59,7 @@ generate:
 all:
 	make api;
 	make config;
+	make validate;
 	make generate;
 
 # show help

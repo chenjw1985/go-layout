@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-
 	v1 "github.com/davidchen-cn/go-layout/api/helloworld/v1"
 	"github.com/davidchen-cn/go-layout/internal/conf"
 	"github.com/davidchen-cn/go-layout/internal/service"
@@ -11,6 +10,7 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware/logging"
 	mmd "github.com/go-kratos/kratos/v2/middleware/metadata"
 	"github.com/go-kratos/kratos/v2/middleware/metrics"
+	"github.com/go-kratos/kratos/v2/middleware/ratelimit"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/http"
@@ -29,6 +29,7 @@ func NewHTTPServer(c *conf.Server, greeter *service.GreeterService, logger log.L
 				}),
 			),
 			tracing.Server(),
+			ratelimit.Server(),
 			logging.Server(logger),
 			mmd.Server(),
 			metrics.Server(

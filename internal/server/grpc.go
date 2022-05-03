@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"github.com/go-kratos/kratos/v2/middleware/ratelimit"
 
 	v1 "github.com/davidchen-cn/go-layout/api/helloworld/v1"
 	"github.com/davidchen-cn/go-layout/internal/conf"
@@ -28,6 +29,7 @@ func NewGRPCServer(c *conf.Server, greeter *service.GreeterService, logger log.L
 				}),
 			),
 			tracing.Server(),
+			ratelimit.Server(),
 			logging.Server(logger),
 			mmd.Server(),
 			metrics.Server(
