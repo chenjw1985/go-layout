@@ -34,3 +34,6 @@ bin/
 .vscode/
 .idea/
 *.swp
+
+# Apollo Config Cache
+go-layout-application.yaml.json
