@@ -8,6 +8,7 @@ import (
 	"github.com/go-kratos/kratos/contrib/config/apollo/v2"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"
+	"github.com/go-kratos/kratos/v2/config/file"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
@@ -75,18 +76,27 @@ func main() {
 		"span.id", tracing.SpanID(),
 	)
 	apolloConf := getApolloConfig()
-	c := config.New(
-		config.WithSource(
-			apollo.NewSource(
-				apollo.WithAppID(apolloConf.AppID),
-				apollo.WithCluster(apolloConf.Cluster),
-				apollo.WithEndpoint(apolloConf.Endpoint),
-				apollo.WithNamespace(apolloConf.Namespace),
-				apollo.WithEnableBackup(),
-				apollo.WithSecret(apolloConf.Secret),
+	var c config.Config
+	if mode := os.Getenv("KratosRunMode"); mode == "dev" {
+		c = config.New(
+			config.WithSource(
+				file.NewSource("../../configs/config.yaml"),
 			),
-		),
-	)
+		)
+	} else {
+		c = config.New(
+			config.WithSource(
+				apollo.NewSource(
+					apollo.WithAppID(apolloConf.AppID),
+					apollo.WithCluster(apolloConf.Cluster),
+					apollo.WithEndpoint(apolloConf.Endpoint),
+					apollo.WithNamespace(apolloConf.Namespace),
+					apollo.WithEnableBackup(),
+					apollo.WithSecret(apolloConf.Secret),
+				),
+			),
+		)
+	}
 	defer c.Close()
 
 	if err := c.Load(); err != nil {
