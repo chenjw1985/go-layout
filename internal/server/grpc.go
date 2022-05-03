@@ -1,6 +1,8 @@
 package server
 
 import (
+	"context"
+
 	v1 "github.com/davidchen-cn/go-layout/api/helloworld/v1"
 	"github.com/davidchen-cn/go-layout/internal/conf"
 	"github.com/davidchen-cn/go-layout/internal/service"
@@ -18,7 +20,13 @@ import (
 func NewGRPCServer(c *conf.Server, greeter *service.GreeterService, logger log.Logger) *grpc.Server {
 	var opts = []grpc.ServerOption{
 		grpc.Middleware(
-			recovery.Recovery(),
+			recovery.Recovery(
+				recovery.WithLogger(log.DefaultLogger),
+				recovery.WithHandler(func(ctx context.Context, req, err interface{}) error {
+					// do something
+					return nil
+				}),
+			),
 			tracing.Server(),
 			logging.Server(logger),
 			mmd.Server(),

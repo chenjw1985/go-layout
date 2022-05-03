@@ -1,6 +1,8 @@
 package server
 
 import (
+	"context"
+
 	v1 "github.com/davidchen-cn/go-layout/api/helloworld/v1"
 	"github.com/davidchen-cn/go-layout/internal/conf"
 	"github.com/davidchen-cn/go-layout/internal/service"
@@ -19,7 +21,13 @@ import (
 func NewHTTPServer(c *conf.Server, greeter *service.GreeterService, logger log.Logger) *http.Server {
 	var opts = []http.ServerOption{
 		http.Middleware(
-			recovery.Recovery(),
+			recovery.Recovery(
+				recovery.WithLogger(log.DefaultLogger),
+				recovery.WithHandler(func(ctx context.Context, req, err interface{}) error {
+					// do something
+					return nil
+				}),
+			),
 			tracing.Server(),
 			logging.Server(logger),
 			mmd.Server(),
