@@ -6,6 +6,10 @@ option go_package = "github.com/davidchen-cn/go-layout/internal/conf;conf";
 import "google/protobuf/duration.proto";
 
 message Bootstrap {
+  Application application = 1;
+}
+
+message Application {
   Server server = 1;
   Data data = 2;
 }
