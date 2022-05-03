@@ -23,12 +23,10 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
 )
 
-// go build -ldflags "-X main.Version=x.y.z -X main.Environment=prod"
 var (
-	Name        = "go-layout"
-	Version     = "0.1.0"
-	Environment = "dev"
-	id, _       = os.Hostname()
+	Name    = "go-layout"
+	Version = "0.1.0"
+	id, _   = os.Hostname()
 )
 
 func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server, etcdConf *conf.Etcd) *kratos.App {
@@ -86,6 +84,10 @@ func getApolloConfig() *ApolloConf {
 }
 
 func createTracerProvider(endpoint string) (*tracesdk.TracerProvider, error) {
+	environment := "prod"
+	if os.Getenv("KratosRunMode") != "" {
+		environment = os.Getenv("KratosRunMode")
+	}
 	// Create the Jaeger exporter
 	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(endpoint)))
 	if err != nil {
@@ -98,7 +100,7 @@ func createTracerProvider(endpoint string) (*tracesdk.TracerProvider, error) {
 		tracesdk.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceNameKey.String(Name),
-			attribute.String("environment", Environment),
+			attribute.String("environment", environment),
 			attribute.String("ID", id),
 		)),
 	)
