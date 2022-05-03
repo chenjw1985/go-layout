@@ -14,6 +14,11 @@ init:
 	go install github.com/envoyproxy/protoc-gen-validate@latest
 	brew install protobuf #recommend use brew manage the mac applications
 
+.PHONY: dev
+# init env
+dev:
+	export KratosRunMode=dev
+
 .PHONY: config
 # generate internal proto
 config:

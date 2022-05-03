@@ -6,6 +6,8 @@ go install github.com/go-kratos/kratos/cmd/kratos/v2@latest
 ```
 ## Set Local Dev Env
 ```bash
+make local
+# or change forever
 vi ~/.bash_profile
 # add below content
 export KratosRunMode=dev
