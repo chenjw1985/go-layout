@@ -23,6 +23,10 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
 )
 
+const (
+	KratosOnDev = "dev"
+)
+
 var (
 	Name    = "go-layout"
 	Version = "0.1.0"
@@ -112,7 +116,7 @@ func main() {
 	// init config
 	apolloConf := getApolloConfig()
 	var c config.Config
-	if mode := os.Getenv("KratosRunMode"); mode == "dev" {
+	if mode := os.Getenv("KratosRunMode"); mode == KratosOnDev {
 		configPath := "../../configs/config.yaml"
 		log.Debugf("Init config from %s", configPath)
 		c = config.New(
