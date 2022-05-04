@@ -98,6 +98,8 @@ func createTracerProvider(endpoint string) (*tracesdk.TracerProvider, error) {
 		return nil, err
 	}
 	tp := tracesdk.NewTracerProvider(
+		// Set the sampling rate based on the parent span to 100%
+		tracesdk.WithSampler(tracesdk.ParentBased(tracesdk.TraceIDRatioBased(1.0))),
 		// Always be sure to batch in production.
 		tracesdk.WithBatcher(exp),
 		// Record information about this application in a Resource.
