@@ -23,7 +23,7 @@ func NewHTTPServer(c *conf.Server, greeter *service.GreeterService, logger log.L
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(
-				recovery.WithLogger(log.DefaultLogger),
+				recovery.WithLogger(logger),
 				recovery.WithHandler(func(ctx context.Context, req, err interface{}) error {
 					// do something
 					return nil

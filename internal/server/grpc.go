@@ -22,7 +22,7 @@ func NewGRPCServer(c *conf.Server, greeter *service.GreeterService, logger log.L
 	var opts = []grpc.ServerOption{
 		grpc.Middleware(
 			recovery.Recovery(
-				recovery.WithLogger(log.DefaultLogger),
+				recovery.WithLogger(logger),
 				recovery.WithHandler(func(ctx context.Context, req, err interface{}) error {
 					// do something
 					return nil
