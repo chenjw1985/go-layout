@@ -31,7 +31,13 @@ var (
 	Name    = "go-layout"
 	Version = "0.1.0"
 	id, _   = os.Hostname()
+	// flagConf is the config flag.
+	flagConf string
 )
+
+func init() {
+	flag.StringVar(&flagConf, "conf", "../../configs/config.yaml", "config path, eg: -conf config.yaml")
+}
 
 func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server, etcdConf *conf.Etcd) *kratos.App {
 	opts := []kratos.Option{
@@ -119,11 +125,10 @@ func main() {
 	apolloConf := getApolloConfig()
 	var c config.Config
 	if mode := os.Getenv("KratosRunMode"); mode == KratosOnDev {
-		configPath := "../../configs/config.yaml"
-		log.Debugf("Init config from %s", configPath)
+		log.Debugf("Init config from %s", flagConf)
 		c = config.New(
 			config.WithSource(
-				file.NewSource(configPath),
+				file.NewSource(flagConf),
 			),
 		)
 	} else {
