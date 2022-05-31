@@ -37,9 +37,3 @@ bin/
 
 # Apollo Config Cache
 go-layout-application.yaml.json
-
-# Protoc generate code
-**/api/**/*.pb.go
-**/api/**/*.pb.validate.go
-**/cmd/**/wire_gen.go
-internal/conf/*.pb.go
