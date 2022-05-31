@@ -28,9 +28,9 @@ const (
 )
 
 var (
-	Name    = "go-layout"
-	Version = "0.1.0"
-	id, _   = os.Hostname()
+	AppName    = "go-layout"
+	AppVersion = "0.1.0"
+	id, _      = os.Hostname()
 	// flagConf is the config flag.
 	flagConf string
 )
@@ -42,8 +42,8 @@ func init() {
 func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server, etcdConf *conf.Etcd) *kratos.App {
 	opts := []kratos.Option{
 		kratos.ID(id),
-		kratos.Name(Name),
-		kratos.Version(Version),
+		kratos.Name(AppName),
+		kratos.Version(AppVersion),
 		kratos.Metadata(map[string]string{}),
 		kratos.Logger(logger),
 		kratos.Server(
@@ -111,7 +111,7 @@ func createTracerProvider(endpoint string) (*tracesdk.TracerProvider, error) {
 		// Record information about this application in a Resource.
 		tracesdk.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
-			semconv.ServiceNameKey.String(Name),
+			semconv.ServiceNameKey.String(AppName),
 			attribute.String("environment", environment),
 			attribute.String("ID", id),
 		)),
@@ -171,8 +171,8 @@ func main() {
 		"ts", log.DefaultTimestamp,
 		"caller", log.DefaultCaller,
 		"service.id", id,
-		"service.name", Name,
-		"service.version", Version,
+		"service.name", AppName,
+		"service.version", AppVersion,
 		"trace.id", tracing.TraceID(),
 		"span.id", tracing.SpanID(),
 	)
