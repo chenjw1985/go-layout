@@ -1,0 +1,24 @@
+version: '3.7'
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - type: bind
+        source: ~/prometheus.yml
+        target: /etc/prometheus/prometheus.yml
+        read_only: true
+      - type: volume
+        source: prometheus
+        target: /prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - prom
+
+volumes:
+  prometheus:
+    driver: local
+
+networks:
+  prom:
+    driver: bridge
