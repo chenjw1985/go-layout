@@ -90,6 +90,10 @@ func getApolloConfig() *ApolloConf {
 	if namespace := os.Getenv("APOLLO_NAMESPACE"); namespace != "" {
 		conf.Namespace = namespace
 	}
+	if conf.AppID == "" || conf.Endpoint == "" {
+		log.Infof("Apollo config missing: {appid: %s, endpoint: %s}.", conf.AppID, conf.Endpoint)
+		return nil
+	}
 	return conf
 }
 
@@ -124,7 +128,7 @@ func main() {
 	// init config
 	apolloConf := getApolloConfig()
 	var c config.Config
-	if mode := os.Getenv("KratosRunMode"); mode == KratosOnDev {
+	if apolloConf == nil {
 		log.Debugf("Init config from %s", flagConf)
 		c = config.New(
 			config.WithSource(
